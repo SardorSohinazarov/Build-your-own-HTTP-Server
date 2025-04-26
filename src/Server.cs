@@ -22,8 +22,10 @@ var splitted = requestText.Split("\r\n");
 var url = splitted[1].Split(" ")[1]; // bu kod so'rovning URL qismini ajratib oladi.
 Console.WriteLine($"Url->{url}");
 
+var route = splitted[0].Split(" ")[1];
+
 byte[] responseBytes;
-if(url == "localhost:4221")
+if(route == "/")
 {
     string response = "HTTP/1.1 200 OK\r\n\r\n";
     responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
