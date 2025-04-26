@@ -23,7 +23,7 @@ var url = splitted[1].Split(" ")[1]; // bu kod so'rovning URL qismini ajratib ol
 Console.WriteLine($"Url->{url}");
 
 byte[] responseBytes;
-if(url == "http://localhost:4221/")
+if(url == "localhost:4221")
 {
     string response = "HTTP/1.1 200 OK\r\n\r\n";
     responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
