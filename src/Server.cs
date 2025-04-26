@@ -12,7 +12,7 @@ Console.WriteLine("4221 eshitish boshlandi!");
 var clientSocket = server.AcceptSocket(); // bu metod kliyent ulanmaguncha kutadi. Kimdir ulanadi, shunda bu metod ulanishni qabul qiladi va Socket obyektini qaytaradi.
 Console.WriteLine("Client ulandi");
 
-var response = "HTTP/1.1 201 Created\r\n";
+var response = "HTTP/1.1 201 Created\r\nContent-Length: 0\r\n";
 byte[] responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
 clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
 clientSocket.Close(); // bu metod kliyentni yopadi.
