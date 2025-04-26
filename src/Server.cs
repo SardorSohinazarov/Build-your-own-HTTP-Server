@@ -29,6 +29,11 @@ if(route == "/")
 {
     string response = "HTTP/1.1 200 OK\r\n\r\n";
     responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
+}else if (route.StartsWith("/echo/"))
+{
+    string message = route.Substring(6,route.Length - 6); // bu kod URLdan xabarni ajratib oladi.
+    string response = "HTTP/1.1 200 OK\r\n\r\n" + message; // bu kod javobni tayyorlaydi.
+    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
 }
 else
 {
