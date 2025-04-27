@@ -28,57 +28,42 @@ public class Program
         // bu kod kliyentdan keladigan ma'lumotlarni qabul qiladi va javob yuboradi.
         // Kliyentdan keladigan ma'lumotlarni qabul qilish uchun massiv yaratamiz.
 
-        byte[] buffer = new byte[4096]; // bu massiv kliyentdan keladigan ma'lumotlarni saqlaydi.
-
         try
         {
-            var received = clientSocket.Receive(buffer); // bu metod kliyentdan ma'lumotlarni qabul qiladi va buffer massiviga saqlaydi.
-
-            string requestText = Encoding.UTF8.GetString(buffer, 0, received); // bu metod buffer massividagi ma'lumotlarni stringga aylantiradi.
-            Console.WriteLine($"So'rov:\n{requestText}");
-
-            var splitted = requestText.Split("\r\n");
-            string[] sections = requestText.Split("\r\n\r\n"); // bu kod so'rovning tanasini ajratib oladi.
-            string headers = sections[0]; // bu kod so'rovning sarlavhalarini ajratib oladi.
-            string body = sections.Length > 1 ? sections[1] : ""; // bu kod so'rovning tanasini ajratib oladi.
-            var url = splitted[1].Split(" ")[1]; // bu kod so'rovning URL qismini ajratib oladi.
-            Console.WriteLine($"Url->{url}");
-
-            var method = splitted[0].Split(" ")[0];
-            var route = splitted[0].Split(" ")[1];
+            var request = new HttpRequest(clientSocket); // bu kod kliyentdan keladigan so'rovni qabul qiladi va uni HttpRequest obyektiga aylantiradi.
 
             var response = new HttpResponse();
 
-            if (route == "/")
+            if (request.Path == "/")
             {
                 response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
             }
-            else if (route.StartsWith("/echo/"))
+            else if (request.Path.StartsWith("/echo/"))
             {
-                string message = route.Substring(6, route.Length - 6); // bu kod URLdan xabarni ajratib oladi.
+                string message = request.Path.Substring(6, request.Path.Length - 6); // bu kod URLdan xabarni ajratib oladi.
                 response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
                 response.AddHeader("Content-Type", "text/plain"); // bu kod javobning sarlavhasini belgilaydi.
                 response.AddHeader("Content-Length", message.Length.ToString()); // bu kod javobning sarlavhasini belgilaydi.
                 response.Body = message; // bu kod javobning tanasini belgilaydi.
             }
-            else if (route.StartsWith("/user-agent"))
+            else if (request.Path.StartsWith("/user-agent"))
             {
                 response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
-                string userAgent = splitted[2].Split(": ")[1]; // bu kod so'rovdan user-agentni ajratib oladi.
+                string userAgent = request.Headers["User-Agent"]; // bu kod so'rovdan user-agentni ajratib oladi.
                 response.AddHeader("Content-Type", "text/plain"); // bu kod javobning sarlavhasini belgilaydi.
                 response.AddHeader("Content-Length", userAgent.Length.ToString()); // bu kod javobning sarlavhasini belgilaydi.
                 response.Body = userAgent; // bu kod javobning tanasini belgilaydi.
             }
-            else if (route.StartsWith("/files/"))
+            else if (request.Path.StartsWith("/files/"))
             {
                 try
                 {
-                    string fileName = route.Substring(7, route.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
+                    string fileName = request.Path.Substring(7, request.Path.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
                     string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
-                    if(method == "POST")
+                    if(nameof(request.Method) == "POST")
                     {
                         using StreamWriter reader = new StreamWriter(fullPath);
-                        reader.Write(body.Trim());
+                        reader.Write(request.Body);
                         response.StatusCode = 201; // bu kod javobning status kodini belgilaydi.
                     }
                     else
@@ -102,8 +87,8 @@ public class Program
                 response.StatusCode = 404; // bu kod javobning status kodini belgilaydi.
             }
 
-            if (requestText.Contains("Accept-Encoding: gzip"))
-            response.AddHeader("Content-Encoding", "gzip");
+            if (request.Headers.ContainsKey("Accept-Encoding") && request.Headers.ContainsValue("gzip"))
+                response.AddHeader("Content-Encoding", "gzip");
 
             byte[] responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
@@ -117,16 +102,106 @@ public class Program
     }
 }
 
+public class Host
+{
+    public Host(string hostName, int port, string protocol)
+    {
+        HostName = hostName;
+        Port = port;
+        Protocol = protocol;
+    }
+
+    public string HostName { get; set; }
+    public int Port { get; set; }
+    public string Protocol { get; set; }
+}
+
 public class HttpRequest
 {
+    public HttpRequest(Socket clientSocket)
+    {
+        Parse(clientSocket);
+    }
+
     public HttpMethod Method { get; set; }
+    public Host Host { get; set; }
     public string Path { get; set; }
     public string Body { get; set; }
     public Dictionary<string, string> Headers { get; set; }
-    public static HttpRequest Parse(Socket client)
+
+    public HttpRequest Parse(Socket socket)
     {
-        // Implement request parsing logic here
-        return new HttpRequest();
+        byte[] buffer = new byte[4096]; // bu massiv kliyentdan keladigan ma'lumotlarni saqlaydi.
+        var received = socket.Receive(buffer); // bu metod kliyentdan ma'lumotlarni qabul qiladi va buffer massiviga saqlaydi.
+
+        string requestText = Encoding.UTF8.GetString(buffer, 0, received); // bu metod buffer massividagi ma'lumotlarni stringga aylantiradi.
+        Console.WriteLine($"So'rov:\n{requestText}");
+        this.Method = GetMethod(requestText);
+        this.Host = GetHost(requestText);
+        this.Path = GetPath(requestText);
+        this.Body = GetBody(requestText);
+        this.Headers = GetHeaders(requestText);
+
+        return this;
+    }
+
+    private Host GetHost(string requestText)
+    {
+        var splitted = requestText.Split("\r\n");
+        var host = splitted[1].Split(": ")[1];
+        var protocol = splitted[0].Split(" ")[2];
+        var port = 80;
+        if (host.Contains(":"))
+        {
+            port = int.Parse(host.Split(":")[1]);
+            host = host.Split(":")[0];
+        }
+
+        return new Host(host, port, protocol); // bu kod Host obyektini yaratadi va uni qaytaradi.
+    }
+
+    private Dictionary<string, string> GetHeaders(string requestText)
+    {
+        string[] sections = requestText.Split("\r\n\r\n"); // bu kod so'rovning tanasini ajratib oladi.
+        string[] lines = sections[0].Split("\r\n"); // bu kod so'rovning sarlavhalarini ajratib oladi.
+        string[] headerLines = lines[2..]; // bu kod so'rovning sarlavhalarini ajratib oladi.
+        Dictionary<string, string> headers = new Dictionary<string, string>(); // bu kod sarlavhalar uchun lug'at yaratadi.
+        foreach (var line in headerLines)
+        {
+            var header = line.Trim().Split(": "); // bu kod sarlavhalarni ajratib oladi.
+            if (header.Length == 2)
+            {
+                headers.Add(header[0], header[1]); // bu kod sarlavhalarni lug'atga qo'shadi.
+            }
+        }
+        return headers; // bu kod sarlavhalarni qaytaradi.
+    }
+
+    private string GetBody(string requestText)
+    {
+        string[] sections = requestText.Split("\r\n\r\n");
+        string body = sections.Length > 1 ? sections[1] : "";
+        return body.Trim();
+    }
+
+    private string GetPath(string requestText)
+    {
+        var splitted = requestText.Split("\r\n");
+        var route = splitted[0].Split(" ")[1];
+        return route;
+    }
+
+    private HttpMethod GetMethod(string request)
+    {
+        var method = request.Split(" ")[0]; // bu kod so'rovning metodini ajratib oladi.
+        return method switch
+        {
+            "GET" => HttpMethod.GET,
+            "POST" => HttpMethod.POST,
+            "PUT" => HttpMethod.PUT,
+            "DELETE" => HttpMethod.DELETE,
+            _ => throw new NotImplementedException()
+        };
     }
 }
 
