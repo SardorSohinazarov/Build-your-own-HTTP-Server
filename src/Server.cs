@@ -28,7 +28,14 @@ public class Program
         Console.WriteLine("Kliyentga ulanish boshlandi");
         // bu kod kliyentdan keladigan ma'lumotlarni qabul qiladi va javob yuboradi.
         // Kliyentdan keladigan ma'lumotlarni qabul qilish uchun massiv yaratamiz.
+        while (clientSocket.Connected)
+        {
+            ProcessRequest(clientSocket, args);
+        }
+    }
 
+    private static void ProcessRequest(Socket clientSocket, string[] args)
+    {
         try
         {
             var request = new HttpRequest(clientSocket); // bu kod kliyentdan keladigan so'rovni qabul qiladi va uni HttpRequest obyektiga aylantiradi.
@@ -60,9 +67,9 @@ public class Program
                 try
                 {
                     string fileName = request.Path.Substring(7, request.Path.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
-                    string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
+                    string fullPath = Path.Combine(args[1], fileName); // bu kod faylning to'liq yo'lini oladi.
                     //string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
-                    if(request.Method.ToString() == "POST")
+                    if (request.Method.ToString() == "POST")
                     {
                         using StreamWriter reader = new StreamWriter(fullPath);
                         reader.Write(request.Body);
@@ -78,7 +85,7 @@ public class Program
                         response.Body = fileContent; // bu kod javobning tanasini belgilaydi.
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                     response.StatusCode = 404; // bu kod javobning status kodini belgilaydi.
@@ -120,12 +127,10 @@ public class Program
 
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
         }
-
-        clientSocket.Close(); // bu metod kliyentni yopadi.
     }
 }
 
