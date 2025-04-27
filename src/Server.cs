@@ -94,6 +94,7 @@ public class Program
                 if (encodings.Contains("gzip"))
                 {
                     response.AddHeader("Content-Encoding", "gzip");
+                    //not Implemented
                     //response.Body = GzipCompress(response.Body); // bu kod javobni gzip bilan siqadi.
                 }
             }
