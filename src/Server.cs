@@ -106,7 +106,7 @@ public class Program
                         }
                         var compressedBytes = compressedStream.ToArray();
                         response.Body = null;
-                        response.Headers["Content-Length"] = response.Body.Length.ToString();
+                        response.Headers["Content-Length"] = compressedBytes.Length.ToString();
                         responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
                         clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
                         clientSocket.Send(compressedBytes); // bu kod kliyentga siqilgan javobni yuboradi.
@@ -258,7 +258,7 @@ public class HttpResponse
 {
     public int StatusCode { get; set; }
     public string StatusMessage => HttpStatusMessages.GetMessage(StatusCode);
-    public string Body { get; set; }
+    public string Body { get; set; } = string.Empty;
     public Dictionary<string, string> Headers { get; set; }
 
     public byte[] ToByteArray()
