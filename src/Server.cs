@@ -1,3 +1,4 @@
+using MediatR;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -64,6 +65,24 @@ public class Program
                 string response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {userAgent.Length}\r\n\r\n" + userAgent; // bu kod javobni tayyorlaydi.
                 responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
+            else if (route.StartsWith("/files/"))
+            {
+                try
+                {
+                    string fileName = route.Substring(7, route.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
+                    string fullPath = Path.Combine(Directory.GetCurrentDirectory(), fileName); // bu kod faylning to'liq yo'lini oladi.
+                    using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
+                    string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
+                    string response = $"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {fileContent.Length}\r\n\r\n{fileContent}"; // bu kod javobni tayyorlaydi.
+                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    string response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
+                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
+                }
+            }
             else
             {
                 string response = "HTTP/1.1 404 Not Found\r\n\r\n";
@@ -80,3 +99,79 @@ public class Program
         clientSocket.Close(); // bu metod kliyentni yopadi.
     }
 }
+
+
+
+
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Net.Sockets;
+//using System.Net;
+//using System.Text;
+//using System.Threading.Tasks;
+//namespace codecrafters_http_server.src;
+//public class HttpServer {
+//  private readonly TcpListener _listener;
+//  private readonly Dictionary<string, IRequestHandler> _routes;
+//  private bool _isRunning;
+//  public HttpServer(IPAddress ipAddress, int port) {
+//    _listener = new TcpListener(ipAddress, port);
+//    _routes = new Dictionary<string, IRequestHandler>();
+//  }
+//  public void AddRoute(string path, IRequestHandler handler) {
+//    _routes[path] = handler;
+//  }
+//  public void Start() {
+//    _isRunning = true;
+//    _listener.Start();
+//    Console.WriteLine(
+//        $"Server started and listening on port {((IPEndPoint)_listener.LocalEndpoint).Port}");
+//    try {
+//      while (_isRunning) {
+//        // Wait for a client to connect
+//        var client = _listener.AcceptSocket();
+//        Task.Run(() => ProcessClientRequest(client));
+//      }
+//    } catch (Exception ex) {
+//      Console.WriteLine($"Server error: {ex.Message}");
+//    } finally {
+//      Stop();
+//    }
+//  }
+//  public void Stop() {
+//    _isRunning = false;
+//    _listener.Stop();
+//    Console.WriteLine("Server stopped");
+//  }
+//  private void ProcessClientRequest(Socket client) {
+//    try {
+//      using (client) {
+//        while (client.Connected) {
+//          var request = HttpRequest.Parse(client);
+//          if (request == null)
+//            break;
+//          var response = RouteRequest(request);
+//          SendResponse(client, response);
+//        }
+//      }
+//    } catch (Exception ex) {
+//      Console.WriteLine($"Error processing request: {ex.Message}");
+//    }
+//  }
+//  private HttpResponse RouteRequest(HttpRequest request) {
+//    // Extract the base path from the request path
+//    string path = request.Path.Split('/', 3)[1];
+//    string basePath = "/" + path;
+//    // Find the appropriate handler
+//    if (_routes.TryGetValue(basePath, out var handler)) {
+//      return handler.HandleRequest(request);
+//    }
+//    // Return 404 if no handler is found
+//    return new HttpResponse { StatusCode = 404, StatusMessage = "Not Found" };
+//  }
+//  private void SendResponse(Socket client, HttpResponse response) {
+//    byte[] responseBytes = response.ToByteArray();
+//    client.Send(responseBytes, SocketFlags.None);
+//  }
+//}
