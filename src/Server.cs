@@ -87,8 +87,15 @@ public class Program
                 response.StatusCode = 404; // bu kod javobning status kodini belgilaydi.
             }
 
-            if (request.Headers.ContainsKey("Accept-Encoding") && request.Headers.ContainsValue("gzip"))
-                response.AddHeader("Content-Encoding", "gzip");
+            if (request.Headers.ContainsKey("Accept-Encoding"))
+            {
+                var encodings = request.Headers["Accept-Encoding"].Split(",").Select(x => x.Trim()).ToList();
+                if (encodings.Contains("gzip"))
+                {
+                    response.AddHeader("Content-Encoding", "gzip");
+                    //response.Body = GzipCompress(response.Body); // bu kod javobni gzip bilan siqadi.
+                }
+            }
 
             byte[] responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
