@@ -97,6 +97,16 @@ public class Program
                 if (encodings.Contains("gzip"))
                 {
                     response.AddHeader("Content-Encoding", "gzip");
+                    using (var compressedStream = new MemoryStream())
+                    {
+                        using (var gzipStream = new GZipStream(compressedStream, CompressionMode.Compress))
+                        {
+                            byte[] bodyBytes = Encoding.UTF8.GetBytes(response.Body);
+                            gzipStream.Write(bodyBytes, 0, bodyBytes.Length);
+                        }
+                        response.Body = Convert.ToBase64String(compressedStream.ToArray());
+                        response.AddHeader("Content-Length", response.Body.Length.ToString());
+                    }
                 }
             }
 
@@ -249,20 +259,6 @@ public class HttpResponse
     {
         StringBuilder responseBuilder = new StringBuilder();
 
-        if (!string.IsNullOrEmpty(Body))
-        {
-            if (Headers.ContainsKey("Content-Encoding"))
-            {
-                var encodings = Headers["Content-Encoding"].Split(",").Select(x => x.Trim()).ToList();
-                if (encodings.Contains("gzip"))
-                {
-                    var compressedBody = GzipCompress(Body);
-
-                    Headers["Content-Length"] = compressedBody.Length.ToString();
-                }
-            }
-        }
-
         responseBuilder.Append($"HTTP/1.1 {StatusCode} {StatusMessage}\r\n");
         if (Headers != null)
         {
@@ -275,36 +271,10 @@ public class HttpResponse
 
         if (!string.IsNullOrEmpty(Body))
         {
-            if (Headers.ContainsKey("Content-Encoding"))
-            {
-                var encodings = Headers["Content-Encoding"].Split(",").Select(x => x.Trim()).ToList();
-                if (encodings.Contains("gzip"))
-                {
-                    var compressedBody = GzipCompress(Body);
-                    responseBuilder.Append(Encoding.UTF8.GetString(compressedBody));
-                }
-                else
-                {
-                    responseBuilder.Append(Body);
-                }
-            }
+            responseBuilder.Append(Body);
         }
 
         return Encoding.UTF8.GetBytes(responseBuilder.ToString());
-    }
-
-    private static byte[] GzipCompress(string input)
-    {
-        byte[] inputBytes = Encoding.UTF8.GetBytes(input);
-
-        using (var outputStream = new MemoryStream())
-        {
-            using (var gzipStream = new GZipStream(outputStream, CompressionMode.Compress))
-            {
-                gzipStream.Write(inputBytes, 0, inputBytes.Length);
-            }
-            return outputStream.ToArray();
-        }
     }
 
     public void AddHeader(string key, string value)
