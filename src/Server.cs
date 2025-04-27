@@ -1,4 +1,3 @@
-using MediatR;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -7,10 +6,6 @@ public class Program
 {
     private static void Main(string[] args)
     {
-        // You can use print statements as follows for debugging, they'll be visible when running tests.
-        Console.WriteLine("Logs from your program will appear here!");
-
-        // Uncomment this block to pass the first stage
         TcpListener server = new TcpListener(IPAddress.Any, 4221);
         server.Start(); // serverni boshlaydi, ya'ni soket ochiladi va eshitishni boshlaydi.
         Console.WriteLine("4221 eshitish boshlandi!");
@@ -26,7 +21,8 @@ public class Program
         server.Stop(); // serverni to'xtatadi, ya'ni soketni yopadi.
 
     }
-    static void HandleClient(Socket clientSocket,string[] args)
+
+    private static void HandleClient(Socket clientSocket,string[] args)
     {
         Console.WriteLine("Kliyentga ulanish boshlandi");
         // bu kod kliyentdan keladigan ma'lumotlarni qabul qiladi va javob yuboradi.
@@ -49,28 +45,23 @@ public class Program
             Console.WriteLine($"Url->{url}");
 
             var method = splitted[0].Split(" ")[0];
-
             var route = splitted[0].Split(" ")[1];
 
-            byte[] responseBytes;
             string response = "";
 
             if (route == "/")
             {
                 response = "HTTP/1.1 200 OK\r\n\r\n";
-                responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
             else if (route.StartsWith("/echo/"))
             {
                 string message = route.Substring(6, route.Length - 6); // bu kod URLdan xabarni ajratib oladi.
                 response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {message.Length}\r\n\r\n" + message; // bu kod javobni tayyorlaydi.
-                responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
             else if (route.StartsWith("/user-agent"))
             {
                 string userAgent = splitted[2].Split(": ")[1]; // bu kod so'rovdan user-agentni ajratib oladi.
                 response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {userAgent.Length}\r\n\r\n" + userAgent; // bu kod javobni tayyorlaydi.
-                responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
             else if (route.StartsWith("/files/"))
             {
@@ -90,21 +81,19 @@ public class Program
                         string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
                         response = $"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {fileContent.Length}\r\n\r\n{fileContent}"; // bu kod javobni tayyorlaydi.
                     }
-                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
                 }
                 catch(Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                     response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
-                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
                 }
             }
             else
             {
                 response = "HTTP/1.1 404 Not Found\r\n\r\n";
-                responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
 
+            byte[] responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
         }
         catch(Exception ex)
