@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -94,12 +95,13 @@ public class Program
                 if (encodings.Contains("gzip"))
                 {
                     response.AddHeader("Content-Encoding", "gzip");
-                    //not Implemented
-                    //response.Body = GzipCompress(response.Body); // bu kod javobni gzip bilan siqadi.
+                    clientSocket.Send(GzipCompress(response.ToByteArray())); // bu kod javobni gzip bilan siqadi.
+                    return; // bu kod javobni gzip bilan siqadi.
                 }
             }
 
             byte[] responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
+
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
         }
         catch(Exception ex)
@@ -108,6 +110,19 @@ public class Program
         }
 
         clientSocket.Close(); // bu metod kliyentni yopadi.
+    }
+
+    public static byte[] GzipCompress(byte[] inputBytes)
+    {
+        using (var outputStream = new MemoryStream())
+        {
+            using (var gzipStream = new GZipStream(outputStream, CompressionMode.Compress, leaveOpen: true))
+            {
+                gzipStream.Write(inputBytes, 0, inputBytes.Length);
+            }
+            // GZipStream yopilganda MemoryStream'ga siqilgan ma'lumot to'liq yoziladi
+            return outputStream.ToArray();
+        }
     }
 }
 
@@ -138,7 +153,7 @@ public class HttpRequest
     public string Body { get; set; }
     public Dictionary<string, string> Headers { get; set; }
 
-    public HttpRequest Parse(Socket socket)
+    public void Parse(Socket socket)
     {
         byte[] buffer = new byte[4096]; // bu massiv kliyentdan keladigan ma'lumotlarni saqlaydi.
         var received = socket.Receive(buffer); // bu metod kliyentdan ma'lumotlarni qabul qiladi va buffer massiviga saqlaydi.
@@ -150,8 +165,6 @@ public class HttpRequest
         this.Path = GetPath(requestText);
         this.Body = GetBody(requestText);
         this.Headers = GetHeaders(requestText);
-
-        return this;
     }
 
     private Host GetHost(string requestText)
