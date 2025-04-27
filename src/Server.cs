@@ -70,6 +70,7 @@ public class Program
                     string response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
                     responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
                 }
+                return;
             }
 
             if (route == "/")
