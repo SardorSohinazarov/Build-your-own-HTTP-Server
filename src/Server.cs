@@ -53,41 +53,23 @@ public class Program
             var route = splitted[0].Split(" ")[1];
 
             byte[] responseBytes;
-            if(method == "POST")
-            {
-                try
-                {
-                    string fileName = route.Substring(7, route.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
-                    string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
-                    using StreamWriter writer = new StreamWriter(fullPath); // bu kod faylni yozish uchun ochadi.
-                    writer.Write(body); // bu kod faylga ma'lumotlarni yozadi.
-                    string response = $"HTTP/1.1 201 Created\r\nContent-Type: text/plain\r\nContent-Length: {body.Length}\r\n\r\n{body}"; // bu kod javobni tayyorlaydi.
-                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    string response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
-                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
-                }
-                return;
-            }
+            string response = "";
 
             if (route == "/")
             {
-                string response = "HTTP/1.1 200 OK\r\n\r\n";
+                response = "HTTP/1.1 200 OK\r\n\r\n";
                 responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
             else if (route.StartsWith("/echo/"))
             {
                 string message = route.Substring(6, route.Length - 6); // bu kod URLdan xabarni ajratib oladi.
-                string response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {message.Length}\r\n\r\n" + message; // bu kod javobni tayyorlaydi.
+                response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {message.Length}\r\n\r\n" + message; // bu kod javobni tayyorlaydi.
                 responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
             else if (route.StartsWith("/user-agent"))
             {
                 string userAgent = splitted[2].Split(": ")[1]; // bu kod so'rovdan user-agentni ajratib oladi.
-                string response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {userAgent.Length}\r\n\r\n" + userAgent; // bu kod javobni tayyorlaydi.
+                response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {userAgent.Length}\r\n\r\n" + userAgent; // bu kod javobni tayyorlaydi.
                 responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
             else if (route.StartsWith("/files/"))
@@ -96,21 +78,30 @@ public class Program
                 {
                     string fileName = route.Substring(7, route.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
                     string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
-                    using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
-                    string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
-                    string response = $"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {fileContent.Length}\r\n\r\n{fileContent}"; // bu kod javobni tayyorlaydi.
+                    if(method == "POST")
+                    {
+                        using StreamWriter reader = new StreamWriter(fullPath);
+                        reader.Write(body.Trim());
+                        response = $"HTTP/1.1 201 Created\r\n\r\n";
+                    }
+                    else
+                    {
+                        using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
+                        string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
+                        response = $"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {fileContent.Length}\r\n\r\n{fileContent}"; // bu kod javobni tayyorlaydi.
+                    }
                     responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
                 }
                 catch(Exception ex)
                 {
                     Console.WriteLine(ex.Message);
-                    string response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
+                    response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
                     responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
                 }
             }
             else
             {
-                string response = "HTTP/1.1 404 Not Found\r\n\r\n";
+                response = "HTTP/1.1 404 Not Found\r\n\r\n";
                 responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
             }
 
