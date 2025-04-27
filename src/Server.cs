@@ -42,12 +42,36 @@ public class Program
             Console.WriteLine($"So'rov:\n{requestText}");
 
             var splitted = requestText.Split("\r\n");
+            string[] sections = requestText.Split("\r\n\r\n"); // bu kod so'rovning tanasini ajratib oladi.
+            string headers = sections[0]; // bu kod so'rovning sarlavhalarini ajratib oladi.
+            string body = sections.Length > 1 ? sections[1] : ""; // bu kod so'rovning tanasini ajratib oladi.
             var url = splitted[1].Split(" ")[1]; // bu kod so'rovning URL qismini ajratib oladi.
             Console.WriteLine($"Url->{url}");
+
+            var method = splitted[0].Split(" ")[0];
 
             var route = splitted[0].Split(" ")[1];
 
             byte[] responseBytes;
+            if(method == "POST")
+            {
+                try
+                {
+                    string fileName = route.Substring(7, route.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
+                    string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
+                    using StreamWriter writer = new StreamWriter(fullPath); // bu kod faylni yozish uchun ochadi.
+                    writer.Write(body); // bu kod faylga ma'lumotlarni yozadi.
+                    string response = $"HTTP/1.1 201 Created\r\nContent-Type: text/plain\r\nContent-Length: {body.Length}\r\n\r\n{body}"; // bu kod javobni tayyorlaydi.
+                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    string response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
+                    responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
+                }
+            }
+
             if (route == "/")
             {
                 string response = "HTTP/1.1 200 OK\r\n\r\n";
