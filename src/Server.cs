@@ -98,6 +98,8 @@ public class Program
                 {
                     response.AddHeader("Content-Encoding", "gzip");
                     responseBytes = GzipCompress(response.ToByteArray()); // bu kod javobni gzip bilan siqadi.
+                    clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
+                    clientSocket.Close();
                 }
             }
 
