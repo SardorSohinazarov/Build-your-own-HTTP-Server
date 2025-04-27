@@ -19,14 +19,14 @@ public class Program
         {
             Socket clientSocket = server.AcceptSocket(); // bu metod kliyent ulanmaguncha kutadi. Kimdir ulanadi, shunda bu metod ulanishni qabul qiladi va Socket obyektini qaytaradi.
             Console.WriteLine("Client ulandi");
-            Thread clientThread = new Thread(() => HandleClient(clientSocket)); // bu kod yangi ipni yaratadi va unga kliyentni uzatadi.
+            Thread clientThread = new Thread(() => HandleClient(clientSocket,args)); // bu kod yangi ipni yaratadi va unga kliyentni uzatadi.
             clientThread.Start(); // bu kod yangi ipni ishga tushiradi.
         }
 
         server.Stop(); // serverni to'xtatadi, ya'ni soketni yopadi.
 
     }
-    static void HandleClient(Socket clientSocket)
+    static void HandleClient(Socket clientSocket,string[] args)
     {
         Console.WriteLine("Kliyentga ulanish boshlandi");
         // bu kod kliyentdan keladigan ma'lumotlarni qabul qiladi va javob yuboradi.
@@ -70,8 +70,7 @@ public class Program
                 try
                 {
                     string fileName = route.Substring(7, route.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
-                    string directory = "/";
-                    string fullPath = Path.Combine(directory,fileName); // bu kod faylning to'liq yo'lini oladi.
+                    string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
                     using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
                     string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
                     string response = $"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {fileContent.Length}\r\n\r\n{fileContent}"; // bu kod javobni tayyorlaydi.
