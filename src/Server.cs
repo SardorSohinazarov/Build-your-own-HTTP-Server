@@ -47,21 +47,27 @@ public class Program
             var method = splitted[0].Split(" ")[0];
             var route = splitted[0].Split(" ")[1];
 
-            string response = "";
+            var response = new HttpResponse();
 
             if (route == "/")
             {
-                response = "HTTP/1.1 200 OK\r\n\r\n";
+                response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
             }
             else if (route.StartsWith("/echo/"))
             {
                 string message = route.Substring(6, route.Length - 6); // bu kod URLdan xabarni ajratib oladi.
-                response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {message.Length}\r\n\r\n" + message; // bu kod javobni tayyorlaydi.
+                response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
+                response.AddHeader("Content-Type", "text/plain"); // bu kod javobning sarlavhasini belgilaydi.
+                response.AddHeader("Content-Length", message.Length.ToString()); // bu kod javobning sarlavhasini belgilaydi.
+                response.Body = message; // bu kod javobning tanasini belgilaydi.
             }
             else if (route.StartsWith("/user-agent"))
             {
+                response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
                 string userAgent = splitted[2].Split(": ")[1]; // bu kod so'rovdan user-agentni ajratib oladi.
-                response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {userAgent.Length}\r\n\r\n" + userAgent; // bu kod javobni tayyorlaydi.
+                response.AddHeader("Content-Type", "text/plain"); // bu kod javobning sarlavhasini belgilaydi.
+                response.AddHeader("Content-Length", userAgent.Length.ToString()); // bu kod javobning sarlavhasini belgilaydi.
+                response.Body = userAgent; // bu kod javobning tanasini belgilaydi.
             }
             else if (route.StartsWith("/files/"))
             {
@@ -73,27 +79,33 @@ public class Program
                     {
                         using StreamWriter reader = new StreamWriter(fullPath);
                         reader.Write(body.Trim());
-                        response = $"HTTP/1.1 201 Created\r\n\r\n";
+                        response.StatusCode = 201; // bu kod javobning status kodini belgilaydi.
                     }
                     else
                     {
                         using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
                         string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
-                        response = $"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {fileContent.Length}\r\n\r\n{fileContent}"; // bu kod javobni tayyorlaydi.
+                        response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
+                        response.AddHeader("Content-Type", "application/octet-stream"); // bu kod javobning sarlavhasini belgilaydi.
+                        response.AddHeader("Content-Length", fileContent.Length.ToString()); // bu kod javobning sarlavhasini belgilaydi.
+                        response.Body = fileContent; // bu kod javobning tanasini belgilaydi.
                     }
                 }
                 catch(Exception ex)
                 {
                     Console.WriteLine(ex.Message);
-                    response = "HTTP/1.1 404 Not Found\r\n\r\n"; // bu kod javobni tayyorlaydi.
+                    response.StatusCode = 404; // bu kod javobning status kodini belgilaydi.
                 }
             }
             else
             {
-                response = "HTTP/1.1 404 Not Found\r\n\r\n";
+                response.StatusCode = 404; // bu kod javobning status kodini belgilaydi.
             }
 
-            byte[] responseBytes = Encoding.UTF8.GetBytes(response); // bu metod serverdan kliyentga HTTP javobini yuboradi.
+            if (requestText.Contains("Accept-Encoding: gzip"))
+            response.AddHeader("Content-Encoding", "gzip");
+
+            byte[] responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
         }
         catch(Exception ex)
@@ -102,6 +114,81 @@ public class Program
         }
 
         clientSocket.Close(); // bu metod kliyentni yopadi.
+    }
+}
+
+public class HttpRequest
+{
+    public HttpMethod Method { get; set; }
+    public string Path { get; set; }
+    public string Body { get; set; }
+    public Dictionary<string, string> Headers { get; set; }
+    public static HttpRequest Parse(Socket client)
+    {
+        // Implement request parsing logic here
+        return new HttpRequest();
+    }
+}
+
+public enum HttpMethod
+{
+    GET,
+    POST,
+    PUT,
+    DELETE
+}
+
+public static class HttpStatusMessages
+{
+    public static string GetMessage(int statusCode)
+    {
+        return statusCode switch
+        {
+            200 => "OK",
+            201 => "Created",
+            400 => "Bad Request",
+            404 => "Not Found",
+            500 => "Internal Server Error",
+            _ => "Unknown Status"
+        };
+    }
+}
+
+public class HttpResponse
+{
+    public int StatusCode { get; set; }
+    public string StatusMessage => HttpStatusMessages.GetMessage(StatusCode);
+    public string Body { get; set; }
+    public Dictionary<string, string> Headers { get; set; }
+
+    public byte[] ToByteArray()
+    {
+        StringBuilder responseBuilder = new StringBuilder();
+
+        responseBuilder.Append($"HTTP/1.1 {StatusCode} {StatusMessage}\r\n");
+        if (Headers != null)
+        {
+            foreach (var header in Headers)
+            {
+                responseBuilder.Append($"{header.Key}: {header.Value}\r\n");
+            }
+        }
+        responseBuilder.Append("\r\n");
+        if (!string.IsNullOrEmpty(Body))
+        {
+            responseBuilder.Append(Body);
+        }
+
+        return Encoding.UTF8.GetBytes(responseBuilder.ToString());
+    }
+
+    public void AddHeader(string key, string value)
+    {
+        if (Headers == null)
+        {
+            Headers = new Dictionary<string, string>();
+        }
+        Headers.Add(key, value);
     }
 }
 
