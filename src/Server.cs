@@ -104,8 +104,12 @@ public class Program
                             byte[] bodyBytes = Encoding.UTF8.GetBytes(response.Body);
                             gzipStream.Write(bodyBytes, 0, bodyBytes.Length);
                         }
-                        response.Body = Convert.ToBase64String(compressedStream.ToArray());
-                        response.AddHeader("Content-Length", response.Body.Length.ToString());
+                        var compressedBytes = compressedStream.ToArray();
+                        response.Body = null;
+                        response.Headers["Content-Length"] = response.Body.Length.ToString();
+                        responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
+                        clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
+                        clientSocket.Send(compressedBytes); // bu kod kliyentga siqilgan javobni yuboradi.
                     }
                 }
             }
