@@ -110,6 +110,8 @@ public class Program
                         responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
                         clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
                         clientSocket.Send(compressedBytes); // bu kod kliyentga siqilgan javobni yuboradi.
+                        clientSocket.Close(); // bu metod kliyentni yopadi.
+                        return;
                     }
                 }
             }
