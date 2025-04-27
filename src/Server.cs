@@ -60,8 +60,8 @@ public class Program
                 try
                 {
                     string fileName = request.Path.Substring(7, request.Path.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
-                    //string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
-                    string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
+                    string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
+                    //string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
                     if(request.Method.ToString() == "POST")
                     {
                         using StreamWriter reader = new StreamWriter(fullPath);
@@ -70,7 +70,7 @@ public class Program
                     }
                     else
                     {
-                        using StreamReader reader = new StreamReader("C:\\Users\\Sardor\\Desktop\\Learning\\codecrafters-http-server-csharp\\src\\Server.cs"); // bu kod faylni o'qish uchun ochadi.
+                        using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
                         string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
                         response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
                         response.AddHeader("Content-Type", "application/octet-stream"); // bu kod javobning sarlavhasini belgilaydi.
@@ -287,6 +287,7 @@ public class HttpResponse
                 {
                     responseBuilder.Append(Body);
                 }
+            }
         }
 
         return Encoding.UTF8.GetBytes(responseBuilder.ToString());
