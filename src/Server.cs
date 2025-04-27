@@ -96,6 +96,15 @@ public class Program
                 response.StatusCode = 404; // bu kod javobning status kodini belgilaydi.
             }
 
+            if (response.Headers.ContainsKey("Connection"))
+            {
+                var connection = request.Headers["Connection"].Trim();
+                if (connection == "close")
+                {
+                    response.AddHeader("Connection", "close");
+                } 
+            }
+
             byte[] responseBytes;
 
             if (request.Headers.ContainsKey("Accept-Encoding"))
@@ -117,8 +126,16 @@ public class Program
                         responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
                         clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
                         clientSocket.Send(compressedBytes); // bu kod kliyentga siqilgan javobni yuboradi.
-                        clientSocket.Close(); // bu metod kliyentni yopadi.
-                        return;
+                        
+                        if (response.Headers.ContainsKey("Connection"))
+                        {
+                            var connection = request.Headers["Connection"].Trim();
+                            if (connection == "close")
+                            {
+                                clientSocket.Close(); // bu kod kliyentni yopadi.
+                                return;
+                            } 
+                        }
                     }
                 }
             }
@@ -126,6 +143,16 @@ public class Program
             responseBytes = response.ToByteArray(); // bu kod javobni byte massiviga aylantiradi.
 
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
+
+            if (response.Headers.ContainsKey("Connection"))
+            {
+                var connection = request.Headers["Connection"].Trim();
+                if (connection == "close")
+                {
+                    clientSocket.Close(); // bu kod kliyentni yopadi.
+                    return;
+                } 
+            }
         }
         catch (Exception ex)
         {
