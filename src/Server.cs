@@ -96,7 +96,7 @@ public class Program
                 response.StatusCode = 404; // bu kod javobning status kodini belgilaydi.
             }
 
-            if (response.Headers.ContainsKey("Connection"))
+            if (request.Headers.ContainsKey("Connection"))
             {
                 var connection = request.Headers["Connection"].Trim();
                 if (connection == "close")
@@ -127,7 +127,7 @@ public class Program
                         clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
                         clientSocket.Send(compressedBytes); // bu kod kliyentga siqilgan javobni yuboradi.
                         
-                        if (response.Headers.ContainsKey("Connection"))
+                        if (request.Headers.ContainsKey("Connection"))
                         {
                             var connection = request.Headers["Connection"].Trim();
                             if (connection == "close")
@@ -144,7 +144,7 @@ public class Program
 
             clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
 
-            if (response.Headers.ContainsKey("Connection"))
+            if (request.Headers.ContainsKey("Connection"))
             {
                 var connection = request.Headers["Connection"].Trim();
                 if (connection == "close")
