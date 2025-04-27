@@ -60,7 +60,8 @@ public class Program
                 {
                     string fileName = request.Path.Substring(7, request.Path.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
                     string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
-                    if(nameof(request.Method) == "POST")
+                    //string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
+                    if(request.Method.ToString() == "POST")
                     {
                         using StreamWriter reader = new StreamWriter(fullPath);
                         reader.Write(request.Body);
