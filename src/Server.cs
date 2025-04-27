@@ -100,6 +100,7 @@ public class Program
                     responseBytes = GzipCompress(response.ToByteArray()); // bu kod javobni gzip bilan siqadi.
                     clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
                     clientSocket.Close();
+                    return;
                 }
             }
 
