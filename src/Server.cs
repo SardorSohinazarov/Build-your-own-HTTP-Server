@@ -60,8 +60,8 @@ public class Program
                 try
                 {
                     string fileName = request.Path.Substring(7, request.Path.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
-                    string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
-                    //string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
+                    //string fullPath = Path.Combine(args[1],fileName); // bu kod faylning to'liq yo'lini oladi.
+                    string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
                     if(request.Method.ToString() == "POST")
                     {
                         using StreamWriter reader = new StreamWriter(fullPath);
@@ -70,7 +70,7 @@ public class Program
                     }
                     else
                     {
-                        using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
+                        using StreamReader reader = new StreamReader("C:\\Users\\Sardor\\Desktop\\Learning\\codecrafters-http-server-csharp\\src\\Server.cs"); // bu kod faylni o'qish uchun ochadi.
                         string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
                         response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
                         response.AddHeader("Content-Type", "application/octet-stream"); // bu kod javobning sarlavhasini belgilaydi.
@@ -249,6 +249,20 @@ public class HttpResponse
     {
         StringBuilder responseBuilder = new StringBuilder();
 
+        if (!string.IsNullOrEmpty(Body))
+        {
+            if (Headers.ContainsKey("Content-Encoding"))
+            {
+                var encodings = Headers["Content-Encoding"].Split(",").Select(x => x.Trim()).ToList();
+                if (encodings.Contains("gzip"))
+                {
+                    var compressedBody = GzipCompress(Body);
+
+                    Headers["Content-Length"] = compressedBody.Length.ToString();
+                }
+            }
+        }
+
         responseBuilder.Append($"HTTP/1.1 {StatusCode} {StatusMessage}\r\n");
         if (Headers != null)
         {
@@ -266,14 +280,13 @@ public class HttpResponse
                 var encodings = Headers["Content-Encoding"].Split(",").Select(x => x.Trim()).ToList();
                 if (encodings.Contains("gzip"))
                 {
-                    responseBuilder.Append(GzipCompress(Body));
+                    var compressedBody = GzipCompress(Body);
+                    responseBuilder.Append(Encoding.UTF8.GetString(compressedBody));
                 }
-            }
-            else
-            {
-                responseBuilder.Append(Body);
-            }
-
+                else
+                {
+                    responseBuilder.Append(Body);
+                }
         }
 
         return Encoding.UTF8.GetBytes(responseBuilder.ToString());
