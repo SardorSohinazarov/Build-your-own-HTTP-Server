@@ -70,7 +70,8 @@ public class Program
                 try
                 {
                     string fileName = route.Substring(7, route.Length - 7); // bu kod URLdan fayl nomini ajratib oladi.
-                    string fullPath = Path.Combine(Directory.GetCurrentDirectory(), fileName); // bu kod faylning to'liq yo'lini oladi.
+                    string directory = "/";
+                    string fullPath = Path.Combine(directory,fileName); // bu kod faylning to'liq yo'lini oladi.
                     using StreamReader reader = new StreamReader(fullPath); // bu kod faylni o'qish uchun ochadi.
                     string fileContent = reader.ReadToEnd(); // bu kod faylning ichidagi ma'lumotlarni o'qiydi.
                     string response = $"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {fileContent.Length}\r\n\r\n{fileContent}"; // bu kod javobni tayyorlaydi.
