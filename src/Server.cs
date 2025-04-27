@@ -97,10 +97,6 @@ public class Program
                 if (encodings.Contains("gzip"))
                 {
                     response.AddHeader("Content-Encoding", "gzip");
-                    responseBytes = GzipCompress(response.ToByteArray()); // bu kod javobni gzip bilan siqadi.
-                    clientSocket.Send(responseBytes); // bu metod kliyentga javob yuboradi.
-                    clientSocket.Close();
-                    return;
                 }
             }
 
@@ -114,19 +110,6 @@ public class Program
         }
 
         clientSocket.Close(); // bu metod kliyentni yopadi.
-    }
-
-    public static byte[] GzipCompress(byte[] inputBytes)
-    {
-        using (var outputStream = new MemoryStream())
-        {
-            using (var gzipStream = new GZipStream(outputStream, CompressionMode.Compress, leaveOpen: true))
-            {
-                gzipStream.Write(inputBytes, 0, inputBytes.Length);
-            }
-            // GZipStream yopilganda MemoryStream'ga siqilgan ma'lumot to'liq yoziladi
-            return outputStream.ToArray();
-        }
     }
 }
 
@@ -275,12 +258,39 @@ public class HttpResponse
             }
         }
         responseBuilder.Append("\r\n");
+
         if (!string.IsNullOrEmpty(Body))
         {
-            responseBuilder.Append(Body);
+            if (Headers.ContainsKey("Content-Encoding"))
+            {
+                var encodings = Headers["Content-Encoding"].Split(",").Select(x => x.Trim()).ToList();
+                if (encodings.Contains("gzip"))
+                {
+                    responseBuilder.Append(GzipCompress(Body));
+                }
+            }
+            else
+            {
+                responseBuilder.Append(Body);
+            }
+
         }
 
         return Encoding.UTF8.GetBytes(responseBuilder.ToString());
+    }
+
+    private static byte[] GzipCompress(string input)
+    {
+        byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+
+        using (var outputStream = new MemoryStream())
+        {
+            using (var gzipStream = new GZipStream(outputStream, CompressionMode.Compress))
+            {
+                gzipStream.Write(inputBytes, 0, inputBytes.Length);
+            }
+            return outputStream.ToArray();
+        }
     }
 
     public void AddHeader(string key, string value)
