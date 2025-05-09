@@ -1,5 +1,5 @@
 using codecrafters_http_server.src.Http;
-using codecrafters_http_server.src.Middlewares;
+using codecrafters_http_server.src.Middleware;
 using System.Net;
 using System.Net.Sockets;
 

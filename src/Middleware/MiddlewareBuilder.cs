@@ -3,11 +3,11 @@ using System.IO.Compression;
 using System.Text;
 using HttpMethod = codecrafters_http_server.src.Http.HttpMethod;
 
-namespace codecrafters_http_server.src.Middlewares
+namespace codecrafters_http_server.src.Middleware
 {
     public class MiddlewareBuilder
     {
-        private readonly List<Func<HttpContext, RequestDelegate,Task>> _middlewares = new();
+        private readonly List<Func<HttpContext, RequestDelegate, Task>> _middlewares = new();
 
         public MiddlewareBuilder Use(Func<HttpContext, RequestDelegate, Task> middleware)
         {
@@ -26,7 +26,7 @@ namespace codecrafters_http_server.src.Middlewares
 
         public RequestDelegate Run(HttpContext httpContext)
         {
-            RequestDelegate app = (HttpContext httpContext) => FinalHandler(httpContext);
+            RequestDelegate app = (httpContext) => FinalHandler(httpContext);
 
             foreach (var middleware in _middlewares.AsEnumerable().Reverse())
             {
@@ -89,7 +89,7 @@ namespace codecrafters_http_server.src.Middlewares
                 {
                     string fileName = httpContext.Request.Path[7..]; // bu kod URLdan fayl nomini ajratib oladi.
                     string fullPath = Path.Combine(Directory.GetCurrentDirectory(), fileName); // bu kod faylning to'liq yo'lini oladi.
-                                                                       //string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
+                                                                                               //string fullPath = "/"; // bu kod faylning to'liq yo'lini oladi.
                     if (httpContext.Request.Method.ToString() == "POST")
                     {
                         using StreamWriter reader = new StreamWriter(fullPath);
