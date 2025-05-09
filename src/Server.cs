@@ -28,10 +28,8 @@ public class Program
     {
         Console.WriteLine("Kliyentga ulanish boshlandi");
         // bu kod kliyentdan keladigan ma'lumotlarni qabul qiladi va javob yuboradi.
-        while (clientSocket.Connected)
-        {
+        if (clientSocket.Connected)
             await ProcessRequest(clientSocket, args);
-        }
     }
 
     private static async Task ProcessRequest(Socket clientSocket, string[] args)
