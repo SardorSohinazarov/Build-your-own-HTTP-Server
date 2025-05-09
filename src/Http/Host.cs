@@ -1,4 +1,6 @@
-﻿public class Host
+﻿namespace codecrafters_http_server.src.Http;
+
+public class Host
 {
     public Host(string hostName, int port, string protocol)
     {

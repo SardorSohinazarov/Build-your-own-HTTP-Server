@@ -1,15 +1,21 @@
-﻿using System.Net.Sockets;
+﻿using codecrafters_http_server.src.Http;
+using System.Net.Sockets;
 using System.Text;
+using HttpMethod = codecrafters_http_server.src.Http.HttpMethod;
 
 public class HttpRequest
 {
-    public HttpRequest(Socket clientSocket) 
-        => Parse(clientSocket);
+    public HttpRequest(Socket clientSocket)
+    {
+        ClientSocket = clientSocket; // bu kod kliyent soketini saqlaydi.
+        Parse(clientSocket);
+    }
 
     public HttpMethod Method { get; set; }
     public Host Host { get; set; }
     public string Path { get; set; }
     public string Body { get; set; }
+    public Socket ClientSocket { get; set; }
     public Dictionary<string, string> Headers { get; set; }
 
     public void Parse(Socket socket)

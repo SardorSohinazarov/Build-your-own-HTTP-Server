@@ -1,5 +1,7 @@
 ﻿using System.Text;
 
+namespace codecrafters_http_server.src.Http;
+
 public class HttpResponse
 {
     public int StatusCode { get; set; }

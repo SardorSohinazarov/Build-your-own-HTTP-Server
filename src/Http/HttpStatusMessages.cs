@@ -1,4 +1,6 @@
-﻿public static class HttpStatusMessages
+﻿namespace codecrafters_http_server.src.Http;
+
+public static class HttpStatusMessages
 {
     public static string GetMessage(int statusCode)
     {
