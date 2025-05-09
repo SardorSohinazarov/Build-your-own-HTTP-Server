@@ -1,4 +1,5 @@
 ﻿using codecrafters_http_server.src.Http;
+using HttpMethod = codecrafters_http_server.src.Http.HttpMethod;
 
 namespace codecrafters_http_server.src.Middlewares
 {
@@ -23,6 +24,36 @@ namespace codecrafters_http_server.src.Middlewares
             }
 
             return app;
+        }
+
+        public void MapGet(string path, Func<HttpContext, Task> handler)
+        {
+            Use(async (context, next) =>
+            {
+                if (context.Request.Path == path && context.Request.Method == HttpMethod.GET)
+                {
+                    await handler(context);
+                }
+                else
+                {
+                    await next();
+                }
+            });
+        }
+
+        public void MapPost(string path, Func<HttpContext, Task> handler)
+        {
+            Use(async (context, next) =>
+            {
+                if (context.Request.Path == path && context.Request.Method == HttpMethod.POST)
+                {
+                    await handler(context);
+                }
+                else
+                {
+                    await next();
+                }
+            });
         }
     }
 }

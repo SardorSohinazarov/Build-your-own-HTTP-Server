@@ -42,6 +42,8 @@ public class Program
             var httpContext = new HttpContext(request, response); // bu kod so'rov va javobni birlashtiradi.
 
             var middlewareBuilder = new MiddlewareBuilder();
+            middlewareBuilder.MapGet("/qales", QalesMiddleware());
+
             var app = middlewareBuilder.Build((HttpContext) => FinalHandler(httpContext));
             await app(httpContext);
         }
@@ -49,6 +51,17 @@ public class Program
         {
             Console.WriteLine(ex.Message);
         }
+    }
+
+    private static Func<HttpContext, Task> QalesMiddleware()
+    {
+        return async (httpContext) =>
+        {
+            Console.WriteLine("\nYaxshi\n");
+            Console.WriteLine("\nYaxshi\n");
+            Console.WriteLine("\nYaxshi\n");
+            Console.WriteLine("\nYaxshi\n");
+        };
     }
 
     private static async Task FinalHandler(HttpContext httpContext)
