@@ -1,5 +1,6 @@
 using codecrafters_http_server.src.Http;
 using codecrafters_http_server.src.Middleware;
+using codecrafters_http_server.src.Middleware.Middlewares;
 using System.Net;
 using System.Net.Sockets;
 
@@ -40,10 +41,7 @@ public class Program
             var httpContext = new HttpContext(request, response); // bu kod so'rov va javobni birlashtiradi.
 
             var middlewareBuilder = new MiddlewareBuilder();
-            middlewareBuilder.MapGet("/qales", async context =>
-            {
-                Console.WriteLine("Zo'r");
-            });
+            middlewareBuilder.UseMiddleware<AuthenticationMiddleware>();
             var app = middlewareBuilder.Run(httpContext);
             await app(httpContext);
         }

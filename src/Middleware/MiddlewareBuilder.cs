@@ -1,7 +1,6 @@
 ﻿using codecrafters_http_server.src.Http;
 using System.IO.Compression;
 using System.Text;
-using HttpMethod = codecrafters_http_server.src.Http.HttpMethod;
 
 namespace codecrafters_http_server.src.Middleware
 {
@@ -21,12 +20,14 @@ namespace codecrafters_http_server.src.Middleware
             {
                 var middleware = new T();
                 await middleware.InvokeAsync(context, next);
+
+                await next(context); // bu kod keyingi middlewarega o'tadi
             });
         }
 
         public RequestDelegate Run(HttpContext httpContext)
         {
-            RequestDelegate app = (httpContext) => FinalHandler(httpContext);
+            RequestDelegate app = FinalHandler;
 
             foreach (var middleware in _middlewares.AsEnumerable().Reverse())
             {
@@ -36,27 +37,6 @@ namespace codecrafters_http_server.src.Middleware
 
             return app;
         }
-
-        public void Map(HttpMethod method, string path, Func<HttpContext, Task> handler)
-        {
-            Use(async (context, next) =>
-            {
-                if (context.Request.Path == path && context.Request.Method == method)
-                {
-                    await handler(context);
-                }
-                else
-                {
-                    await next(context);
-                }
-            });
-        }
-
-        public void MapGet(string path, Func<HttpContext, Task> handler)
-            => Map(HttpMethod.GET, path, handler);
-
-        public void MapPost(string path, Func<HttpContext, Task> handler)
-            => Map(HttpMethod.POST, path, handler);
 
         private async Task FinalHandler(HttpContext httpContext)
         {
