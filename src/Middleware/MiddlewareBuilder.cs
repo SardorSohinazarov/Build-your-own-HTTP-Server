@@ -47,6 +47,27 @@ namespace codecrafters_http_server.src.Middleware
             {
                 httpContext.Response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
             }
+            else if(httpContext.Request.Path == "/long-running-job")
+            {
+                var cancelationToken = httpContext.RequestAborted;
+                for (int i = 0; i < 1000; i++)
+                {
+                    if(cancelationToken.IsCancellationRequested)
+                    {
+                        Console.WriteLine("Tugadi!");  // Log yoziladi
+                        httpContext.Response.StatusCode = 499; // bu kod javobning status kodini belgilaydi.
+                        httpContext.Response.AddHeader("Content-Type", "text/plain"); // bu kod javobning sarlavhasini belgilaydi.
+                        httpContext.Response.Body = "Client Closed Request"; // bu kod javobning tanasini belgilaydi.
+                    }
+
+                    Console.WriteLine($"Job {i} is running...");
+                    await Task.Delay(1000);  // Cancel bo'lsa bu yerda exception tashlanadi
+                }
+
+                httpContext.Response.StatusCode = 200; // bu kod javobning status kodini belgilaydi.
+                httpContext.Response.AddHeader("Content-Type", "text/plain"); // bu kod javobning sarlavhasini belgilaydi.
+                httpContext.Response.Body = "Success!"; // bu kod javobning tanasini belgilaydi.
+            }
             else if (httpContext.Request.Path.StartsWith("/echo/"))
             {
                 string message = httpContext.Request.Path[6..]; // bu kod URLdan xabarni ajratib oladi.

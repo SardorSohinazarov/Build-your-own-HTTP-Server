@@ -3,6 +3,7 @@ using codecrafters_http_server.src.Middleware;
 using codecrafters_http_server.src.Middleware.Middlewares;
 using System.Net;
 using System.Net.Sockets;
+using CancellationToken = codecrafters_http_server.src.Http.CancellationToken;
 
 public class Program
 {
@@ -38,7 +39,26 @@ public class Program
             var request = new HttpRequest(clientSocket); // bu kod kliyentdan keladigan so'rovni qabul qiladi va uni HttpRequest obyektiga aylantiradi.
             var response = new HttpResponse();
 
-            var httpContext = new HttpContext(request, response); // bu kod so'rov va javobni birlashtiradi.
+            // CancellationToken
+            #region Bu loop client available bo'lmasa, u holda clientni uzatadi
+            var cancellationToken = new CancellationToken();
+            _ = Task.Run(async () =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await Task.Delay(100);
+                    bool disconnected = clientSocket.Poll(0, SelectMode.SelectRead) && clientSocket.Available == 0;
+                    if (disconnected)
+                    {
+                        cancellationToken.Cancel();
+                        Console.WriteLine("Client disconnected. CancellationToken triggered.");
+                        break;
+                    }
+                }
+            });
+            #endregion
+
+            var httpContext = new HttpContext(request, response, cancellationToken); // bu kod so'rov va javobni birlashtiradi.
 
             var middlewareBuilder = new MiddlewareBuilder();
             middlewareBuilder.UseMiddleware<AuthenticationMiddleware>();
