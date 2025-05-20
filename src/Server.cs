@@ -7,7 +7,7 @@ using CancellationToken = codecrafters_http_server.src.Http.CancellationToken;
 
 public class Program
 {
-    private static async Task Main(string[] args)
+    private static void Main(string[] args)
     {
         TcpListener server = new TcpListener(IPAddress.Any, 4221);
         server.Start(); // serverni boshlaydi, ya'ni soket ochiladi va eshitishni boshlaydi.
@@ -17,16 +17,15 @@ public class Program
         {
             Socket clientSocket = server.AcceptSocket(); // bu metod kliyent ulanmaguncha kutadi. Kimdir ulanadi, shunda bu metod ulanishni qabul qiladi va Socket obyektini qaytaradi.
             Console.WriteLine("Client ulandi");
-            Thread clientThread = new Thread(async () => await HandleClient(clientSocket,args)); // bu kod yangi threadteni yaratadi va unga kliyentni uzatadi.
-            clientThread.Start(); // yangi threadda so'rovni handle qilishni boshlaydi.
-        }
 
-        server.Stop(); // serverni to'xtatadi, ya'ni soketni yopadi.
+            _ = Task.Run(() => HandleClient(clientSocket,args));
+        }
     }
 
     private static async Task HandleClient(Socket clientSocket,string[] args)
     {
         Console.WriteLine("Kliyentga ulanish boshlandi");
+
         // bu kod kliyentdan keladigan ma'lumotlarni qabul qiladi va javob yuboradi.
         if (clientSocket.Connected)
             await ProcessRequest(clientSocket, args);
